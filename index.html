@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Who Pays the Bill? 💸</title>
+<link href="https://fonts.googleapis.com/css2?family=Sour+Gummy:wght@400;700;900&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f0c1a;
+    --card: #1c1730;
+    --accent: #ff4d6d;
+    --gold: #ffd700;
+    --green: #2ecc71;
+    --purple: #a855f7;
+    --text: #f0e6ff;
+    --muted: #8b7aa8;
+    --border: #2e2550;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    font-family: 'Nunito', sans-serif;
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+    position: relative;
+  }
+
+  /* Animated background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 80% 50% at 20% 10%, rgba(168,85,247,0.12) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 40% at 80% 80%, rgba(255,77,109,0.1) 0%, transparent 60%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    position: relative;
+    z-index: 1;
+    max-width: 520px;
+    margin: 0 auto;
+    padding: 20px 16px 60px;
+  }
+
+  /* Header */
+  .header {
+    text-align: center;
+    padding: 32px 0 28px;
+  }
+  .header .emoji-big {
+    font-size: 3.5rem;
+    display: block;
+    margin-bottom: 8px;
+    animation: float 3s ease-in-out infinite;
+  }
+  @keyframes float {
+    0%,100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+  }
+  .header h1 {
+    font-family: 'Sour Gummy', cursive;
+    font-size: 2.2rem;
+    font-weight: 900;
+    background: linear-gradient(135deg, #ffd700, #ff4d6d, #a855f7);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1.1;
+  }
+  .header p {
+    color: var(--muted);
+    margin-top: 8px;
+    font-size: 0.95rem;
+  }
+
+  /* Stage indicator */
+  .stages {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 28px;
+    background: var(--card);
+    border-radius: 16px;
+    padding: 6px;
+    border: 1px solid var(--border);
+  }
+  .stage-btn {
+    flex: 1;
+    padding: 10px;
+    border-radius: 12px;
+    border: none;
+    font-family: 'Nunito', sans-serif;
+    font-weight: 700;
+    font-size: 0.9rem;
+    cursor: default;
+    transition: all 0.3s;
+    color: var(--muted);
+    background: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+  .stage-btn.active {
+    background: linear-gradient(135deg, var(--purple), var(--accent));
+    color: white;
+    box-shadow: 0 4px 15px rgba(168,85,247,0.4);
+  }
+  .stage-btn.done {
+    color: var(--green);
+  }
+
+  /* Card */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 24px;
+    margin-bottom: 16px;
+  }
+
+  /* Input area */
+  .input-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  .input-row input {
+    flex: 1;
+    background: rgba(255,255,255,0.05);
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    padding: 12px 16px;
+    color: var(--text);
+    font-family: 'Nunito', sans-serif;
+    font-size: 1rem;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .input-row input::placeholder { color: var(--muted); }
+  .input-row input:focus { border-color: var(--purple); }
+  .btn-add {
+    background: linear-gradient(135deg, var(--purple), #7c3aed);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    padding: 12px 20px;
+    font-family: 'Nunito', sans-serif;
+    font-weight: 700;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+    white-space: nowrap;
+  }
+  .btn-add:hover { transform: scale(1.05); box-shadow: 0 4px 15px rgba(168,85,247,0.5); }
+  .btn-add:active { transform: scale(0.97); }
+
+  /* Names list */
+  .names-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-height: 20px;
+  }
+  .name-chip {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 10px 14px;
+    animation: slideIn 0.25s ease;
+  }
+  @keyframes slideIn {
+    from { opacity:0; transform: translateX(-15px); }
+    to { opacity:1; transform: translateX(0); }
+  }
+  .name-chip span {
+    font-weight: 600;
+    font-size: 0.95rem;
+  }
+  .name-chip .num {
+    width: 26px; height: 26px;
+    background: linear-gradient(135deg, var(--purple), var(--accent));
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.75rem; font-weight: 700;
+    margin-right: 10px;
+    flex-shrink: 0;
+  }
+  .name-left { display: flex; align-items: center; }
+  .btn-remove {
+    background: none;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 1.1rem;
+    padding: 2px 6px;
+    border-radius: 6px;
+    transition: color 0.2s, background 0.2s;
+  }
+  .btn-remove:hover { color: var(--accent); background: rgba(255,77,109,0.1); }
+
+  .empty-state {
+    text-align: center;
+    color: var(--muted);
+    font-size: 0.9rem;
+    padding: 16px;
+  }
+
+  .count-badge {
+    font-size: 0.8rem;
+    color: var(--muted);
+    margin-bottom: 12px;
+    font-weight: 600;
+  }
+  .count-badge span { color: var(--purple); }
+
+  /* Next button */
+  .btn-next {
+    width: 100%;
+    padding: 15px;
+    background: linear-gradient(135deg, #ff4d6d, #ff6b35);
+    color: white;
+    border: none;
+    border-radius: 16px;
+    font-family: 'Sour Gummy', cursive;
+    font-size: 1.25rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s, opacity 0.2s;
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    box-shadow: 0 6px 20px rgba(255,77,109,0.4);
+  }
+  .btn-next:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(255,77,109,0.5); }
+  .btn-next:active:not(:disabled) { transform: translateY(0); }
+  .btn-next:disabled { opacity: 0.4; cursor: not-allowed; box-shadow: none; }
+
+  /* ---- STAGE 2: SPINNER ---- */
+  #stage2 { display: none; }
+
+  .spinner-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 16px 0 8px;
+  }
+
+  /* Wheel */
+  .wheel-container {
+    position: relative;
+    width: 280px; height: 280px;
+    margin: 0 auto 20px;
+  }
+  canvas#wheel {
+    border-radius: 50%;
+    box-shadow: 0 0 40px rgba(168,85,247,0.4), 0 0 0 4px var(--border);
+  }
+  .wheel-pointer {
+    position: absolute;
+    top: -18px; left: 50%;
+    transform: translateX(-50%);
+    font-size: 2rem;
+    filter: drop-shadow(0 2px 6px rgba(0,0,0,0.8));
+    z-index: 10;
+  }
+
+  .btn-spin {
+    background: linear-gradient(135deg, var(--gold), #ff9800);
+    color: #1a1000;
+    border: none;
+    border-radius: 50px;
+    padding: 14px 40px;
+    font-family: 'Sour Gummy', cursive;
+    font-size: 1.3rem;
+    font-weight: 900;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.2s;
+    box-shadow: 0 6px 20px rgba(255,215,0,0.4);
+    margin-top: 8px;
+  }
+  .btn-spin:hover:not(:disabled) { transform: scale(1.05); box-shadow: 0 8px 25px rgba(255,215,0,0.6); }
+  .btn-spin:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  /* Result */
+  .result-box {
+    display: none;
+    text-align: center;
+    padding: 28px 20px;
+    border-radius: 20px;
+    background: linear-gradient(135deg, rgba(255,77,109,0.15), rgba(168,85,247,0.15));
+    border: 2px solid var(--accent);
+    margin-top: 20px;
+    animation: popIn 0.5s cubic-bezier(0.175,0.885,0.32,1.275);
+  }
+  @keyframes popIn {
+    from { opacity:0; transform: scale(0.7); }
+    to { opacity:1; transform: scale(1); }
+  }
+  .result-box .loser-emoji { font-size: 3rem; display: block; margin-bottom: 10px; }
+  .result-box h2 {
+    font-family: 'Sour Gummy', cursive;
+    font-size: 1.5rem;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+  .result-box .loser-name {
+    font-family: 'Sour Gummy', cursive;
+    font-size: 2.5rem;
+    font-weight: 900;
+    background: linear-gradient(135deg, var(--gold), var(--accent));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    display: block;
+    margin-bottom: 8px;
+  }
+  .result-box p { color: var(--muted); font-size: 0.95rem; }
+
+  .btn-restart {
+    width: 100%;
+    margin-top: 16px;
+    padding: 13px;
+    background: transparent;
+    border: 2px solid var(--border);
+    border-radius: 14px;
+    color: var(--muted);
+    font-family: 'Nunito', sans-serif;
+    font-weight: 700;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-restart:hover { border-color: var(--purple); color: var(--text); }
+
+  /* Confetti canvas */
+  #confetti-canvas {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 999;
+  }
+
+  /* Floating coins decoration */
+  .coins {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    pointer-events: none;
+    overflow: hidden;
+    z-index: 0;
+  }
+  .coin {
+    position: absolute;
+    font-size: 1.2rem;
+    opacity: 0.08;
+    animation: coinFloat linear infinite;
+  }
+  @keyframes coinFloat {
+    from { transform: translateY(100vh) rotate(0deg); opacity: 0.08; }
+    to { transform: translateY(-100px) rotate(360deg); opacity: 0; }
+  }
+</style>
+</head>
+<body>
+
+<canvas id="confetti-canvas"></canvas>
+
+<div class="coins" id="coins"></div>
+
+<div class="container">
+  <div class="header">
+    <span class="emoji-big">💸</span>
+    <h1>Who Pays<br>the Bill?</h1>
+    <p>Add names, spin the wheel, let fate decide!</p>
+  </div>
+
+  <!-- Stage Tabs -->
+  <div class="stages">
+    <div class="stage-btn active" id="tab1">✏️ Stage 1 — Names</div>
+    <div class="stage-btn" id="tab2">🎰 Stage 2 — Spin</div>
+  </div>
+
+  <!-- STAGE 1 -->
+  <div id="stage1">
+    <div class="card">
+      <div class="input-row">
+        <input type="text" id="nameInput" placeholder="Type a name here..." maxlength="20" />
+        <button class="btn-add" onclick="addName()">+ Add</button>
+      </div>
+      <div class="count-badge">Added : <span id="nameCount">0</span> people</div>
+      <div class="names-list" id="namesList">
+        <div class="empty-state">No names added yet... add some above! 👆</div>
+      </div>
+    </div>
+
+    <button class="btn-next" id="nextBtn" onclick="goToStage2()" disabled>
+      Let's Spin! 🎰
+    </button>
+  </div>
+
+  <!-- STAGE 2 -->
+  <div id="stage2">
+    <div class="card spinner-wrap">
+      <div class="wheel-container">
+        <div class="wheel-pointer">▼</div>
+        <canvas id="wheel" width="280" height="280"></canvas>
+      </div>
+      <button class="btn-spin" id="spinBtn" onclick="spinWheel()">SPIN!</button>
+    </div>
+
+    <div class="result-box" id="resultBox">
+      <span class="loser-emoji">😭</span>
+      <h2>The one paying the bill is...</h2>
+      <span class="loser-name" id="loserName"></span>
+      <p>Tough luck! Better luck next time 😂</p>
+    </div>
+
+    <button class="btn-restart" onclick="restart()">🔄</button>
+  </div>
+</div>
+
+<script>
+  let names = [];
+  const COLORS = [
+    '#a855f7','#ff4d6d','#ffd700','#2ecc71',
+    '#3b82f6','#f97316','#ec4899','#14b8a6',
+    '#ef4444','#8b5cf6','#10b981','#f59e0b'
+  ];
+
+  // Floating coins
+  const coinsEl = document.getElementById('coins');
+  for(let i=0;i<12;i++){
+    const c = document.createElement('div');
+    c.className = 'coin';
+    c.textContent = ['💰','💵','🪙','💳'][Math.floor(Math.random()*4)];
+    c.style.left = Math.random()*100+'%';
+    c.style.animationDuration = (8+Math.random()*12)+'s';
+    c.style.animationDelay = (Math.random()*10)+'s';
+    coinsEl.appendChild(c);
+  }
+
+  // Enter key
+  document.getElementById('nameInput').addEventListener('keydown', e => {
+    if(e.key === 'Enter') addName();
+  });
+
+  function addName() {
+    const input = document.getElementById('nameInput');
+    const val = input.value.trim();
+    if(!val) return;
+    if(names.includes(val)) { input.style.borderColor='var(--accent)'; setTimeout(()=>input.style.borderColor='',800); return; }
+    names.push(val);
+    input.value = '';
+    input.focus();
+    renderNames();
+  }
+
+  function removeName(i) {
+    names.splice(i,1);
+    renderNames();
+  }
+
+  function renderNames() {
+    const list = document.getElementById('namesList');
+    document.getElementById('nameCount').textContent = names.length;
+    document.getElementById('nextBtn').disabled = names.length < 2;
+
+    if(names.length === 0) {
+      list.innerHTML = '<div class="empty-state">No names added yet... add some above! 👆</div>';
+      return;
+    }
+    list.innerHTML = names.map((n,i) => `
+      <div class="name-chip">
+        <div class="name-left">
+          <div class="num">${i+1}</div>
+          <span>${n}</span>
+        </div>
+        <button class="btn-remove" onclick="removeName(${i})">✕</button>
+      </div>
+    `).join('');
+  }
+
+  function goToStage2() {
+    document.getElementById('stage1').style.display = 'none';
+    document.getElementById('stage2').style.display = 'block';
+    document.getElementById('tab1').classList.remove('active');
+    document.getElementById('tab1').classList.add('done');
+    document.getElementById('tab2').classList.add('active');
+    drawWheel(0);
+  }
+
+  // Wheel drawing
+  const canvas = document.getElementById('wheel');
+  const ctx = canvas.getContext('2d');
+  let currentAngle = 0;
+  let spinning = false;
+
+  function drawWheel(rotation) {
+    const cx = 140, cy = 140, r = 130;
+    const slice = (2 * Math.PI) / names.length;
+    ctx.clearRect(0,0,280,280);
+
+    names.forEach((name,i) => {
+      const start = rotation + i * slice;
+      const end = start + slice;
+      ctx.beginPath();
+      ctx.moveTo(cx,cy);
+      ctx.arc(cx,cy,r,start,end);
+      ctx.closePath();
+      ctx.fillStyle = COLORS[i % COLORS.length];
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(0,0,0,0.3)';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      // Label
+      ctx.save();
+      ctx.translate(cx,cy);
+      ctx.rotate(start + slice/2);
+      ctx.textAlign = 'right';
+      ctx.fillStyle = 'rgba(0,0,0,0.75)';
+      ctx.font = 'bold 13px Nunito, sans-serif';
+      const truncated = name.length > 9 ? name.slice(0,8)+'…' : name;
+      ctx.fillText(truncated, r-8, 5);
+      ctx.restore();
+    });
+
+    // Center circle
+    ctx.beginPath();
+    ctx.arc(cx,cy,28,0,2*Math.PI);
+    ctx.fillStyle = '#0f0c1a';
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+    ctx.lineWidth = 3;
+    ctx.stroke();
+    ctx.fillStyle = '#ffd700';
+    ctx.font = 'bold 18px Nunito';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('💸', cx, cy);
+  }
+
+  function spinWheel() {
+    if(spinning) return;
+    spinning = true;
+    document.getElementById('spinBtn').disabled = true;
+    document.getElementById('resultBox').style.display = 'none';
+
+    const totalSpins = (5 + Math.random() * 5) * 2 * Math.PI;
+    const duration = 4000 + Math.random() * 2000;
+    const startTime = performance.now();
+    const startAngle = currentAngle;
+
+    function easeOut(t) { return 1 - Math.pow(1-t, 4); }
+
+    function animate(now) {
+      const elapsed = now - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      const eased = easeOut(progress);
+      currentAngle = startAngle + totalSpins * eased;
+      drawWheel(currentAngle);
+
+      if(progress < 1) {
+        requestAnimationFrame(animate);
+      } else {
+        spinning = false;
+        document.getElementById('spinBtn').disabled = false;
+        showResult();
+      }
+    }
+    requestAnimationFrame(animate);
+  }
+
+  function showResult() {
+    // Pointer is at top (270deg = -PI/2 from right = 3PI/2)
+    const slice = (2 * Math.PI) / names.length;
+    // Normalize angle
+    let angle = ((currentAngle % (2*Math.PI)) + 2*Math.PI) % (2*Math.PI);
+    // Pointer at top = 3*PI/2 direction from center
+    // We need which segment is at the top
+    const pointerAngle = (3 * Math.PI / 2);
+    let relative = (pointerAngle - angle % (2*Math.PI) + 4*Math.PI) % (2*Math.PI);
+    const index = Math.floor(relative / slice) % names.length;
+    const loser = names[index];
+
+    document.getElementById('loserName').textContent = loser;
+    const box = document.getElementById('resultBox');
+    box.style.display = 'block';
+
+    launchConfetti();
+  }
+
+  // Confetti
+  function launchConfetti() {
+    const cc = document.getElementById('confetti-canvas');
+    cc.width = window.innerWidth;
+    cc.height = window.innerHeight;
+    const ctx2 = cc.getContext('2d');
+    const pieces = Array.from({length:120},()=>({
+      x: Math.random()*cc.width,
+      y: -20,
+      r: 4+Math.random()*6,
+      color: COLORS[Math.floor(Math.random()*COLORS.length)],
+      vx: (Math.random()-0.5)*6,
+      vy: 3+Math.random()*5,
+      rot: Math.random()*360,
+      vr: (Math.random()-0.5)*10,
+      shape: Math.random()>0.5?'rect':'circle'
+    }));
+    let frame = 0;
+    function draw() {
+      ctx2.clearRect(0,0,cc.width,cc.height);
+      pieces.forEach(p=>{
+        p.x+=p.vx; p.y+=p.vy; p.rot+=p.vr; p.vy+=0.1;
+        ctx2.save();
+        ctx2.translate(p.x,p.y);
+        ctx2.rotate(p.rot*Math.PI/180);
+        ctx2.fillStyle=p.color;
+        if(p.shape==='circle'){ctx2.beginPath();ctx2.arc(0,0,p.r,0,2*Math.PI);ctx2.fill();}
+        else{ctx2.fillRect(-p.r,-p.r/2,p.r*2,p.r);}
+        ctx2.restore();
+      });
+      frame++;
+      if(frame<200) requestAnimationFrame(draw);
+      else ctx2.clearRect(0,0,cc.width,cc.height);
+    }
+    requestAnimationFrame(draw);
+  }
+
+  function restart() {
+    names = [];
+    currentAngle = 0;
+    document.getElementById('stage2').style.display = 'none';
+    document.getElementById('stage1').style.display = 'block';
+    document.getElementById('tab1').classList.add('active');
+    document.getElementById('tab1').classList.remove('done');
+    document.getElementById('tab2').classList.remove('active');
+    document.getElementById('resultBox').style.display = 'none';
+    renderNames();
+  }
+</script>
+</body>
+</html>
